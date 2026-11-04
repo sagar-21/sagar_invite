@@ -942,6 +942,10 @@
     const label = currentLabel();
     const introDuration = bgVideoMeta.duration || tpl.duration;
 
+    if(typeof FFmpeg === 'undefined'){
+      toast('FFmpeg library load नहीं हुई (network/script issue) — इसलिए MP4 बनना/fast method दोनों काम नहीं करेंगे, webm मिलेगा।', 6000);
+    }
+
     // Try the FAST method first: record only the short intro, then merge it
     // with your original main video file directly (no re-encoding it at all).
     let finalBlob = null;
@@ -952,7 +956,11 @@
         setProgress(55, 'मुख्य वीडियो के साथ जोड़ा जा रहा है (fast method)…');
         finalBlob = await fastMergeWithMain(introBlob, videoBlob, w, h);
         if(finalBlob) usedFast = true;
-      }catch(e){ console.warn('fast merge failed:', e); finalBlob = null; }
+      }catch(e){
+        console.warn('fast merge failed:', e);
+        toast('Fast method error: ' + (e && e.message ? e.message : String(e)), 5000);
+        finalBlob = null;
+      }
     }
 
     if(finalBlob){
@@ -1190,6 +1198,7 @@
       return new Blob([data.buffer], {type:'video/mp4'});
     }catch(e){
       console.warn('mp4 conversion failed', e);
+      toast('MP4 conversion error: ' + (e && e.message ? e.message : String(e)), 5000);
       return null;
     }
   }
