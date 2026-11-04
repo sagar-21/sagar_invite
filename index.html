@@ -1042,14 +1042,15 @@
     for(const n of names){ try{ ffmpegInstance.FS('unlink', n); }catch(e){} }
   }
   async function fastMergeWithMain(introBlob, mainBlob, w, h){
-    if(typeof FFmpeg === 'undefined') return null;
-    if(mainBlob.size > 300*1024*1024) return null;
+    if(typeof FFmpeg === 'undefined'){ toast('Diag: FFmpeg global undefined', 5000); return null; }
+    if(mainBlob.size > 300*1024*1024){ toast('Diag: main video > 300MB, skipping fast path', 5000); return null; }
     const { createFFmpeg, fetchFile } = FFmpeg;
     if(!ffmpegInstance){
       ffmpegInstance = createFFmpeg({ log:false, corePath:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js' });
     }
     ffmpegInstance.setProgress(({ratio})=>{ if(ratio>=0 && ratio<=1) setProgress(55 + ratio*35, 'जोड़ा जा रहा है…'); });
-    try{ if(!ffmpegInstance.isLoaded()) await ffmpegInstance.load(); }catch(e){ return null; }
+    try{ if(!ffmpegInstance.isLoaded()) await ffmpegInstance.load(); }
+    catch(eLoad){ toast('Diag: ffmpeg.load() failed — '+(eLoad&&eLoad.message?eLoad.message:eLoad), 6000); return null; }
 
     let mainExt = 'mp4';
     if(mainBlob.type.includes('quicktime')) mainExt = 'mov';
@@ -1059,8 +1060,10 @@
 
     try{
       ffmpegInstance.FS('writeFile', introFile, await fetchFile(introBlob));
-      await ffmpegInstance.run('-i', introFile, '-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p',
-        '-vf', `scale=${w}:${h}`, '-r','30', '-c:a','aac','-ar','44100','-ac','2','-b:a','192k', introMp4);
+      try{
+        await ffmpegInstance.run('-i', introFile, '-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p',
+          '-vf', `scale=${w}:${h}`, '-r','30', '-c:a','aac','-ar','44100','-ac','2','-b:a','192k', introMp4);
+      }catch(eIntro){ toast('Diag: intro re-encode step failed — '+(eIntro&&eIntro.message?eIntro.message:eIntro), 6000); throw eIntro; }
       ffmpegInstance.FS('writeFile', mainFile, await fetchFile(mainBlob));
 
       // fast stream-copy concat: no re-encoding of the main video at all.
@@ -1069,12 +1072,15 @@
       // just using the legacy method, so we return null and let the caller
       // fall back to legacyFullRecord instead.
       ffmpegInstance.FS('writeFile','list.txt', new TextEncoder().encode(`file '${introMp4}'\nfile '${mainFile}'\n`));
-      await ffmpegInstance.run('-f','concat','-safe','0','-i','list.txt','-c','copy','-movflags','+faststart','merged.mp4');
+      try{
+        await ffmpegInstance.run('-f','concat','-safe','0','-i','list.txt','-c','copy','-movflags','+faststart','merged.mp4');
+      }catch(eConcat){ toast('Diag: concat command threw — '+(eConcat&&eConcat.message?eConcat.message:eConcat), 6000); throw eConcat; }
       const data = ffmpegInstance.FS('readFile','merged.mp4');
       cleanupFfmpegFiles([introFile, introMp4, mainFile, 'list.txt', 'merged.mp4']);
       if(data && data.length > 10000){
         return new Blob([data.buffer], {type:'video/mp4'});
       }
+      toast('Diag: concat ran but output file too small/empty ('+(data?data.length:0)+' bytes) — likely codec mismatch between intro and main video', 6000);
       return null;
     }catch(e2){
       console.warn('fast merge failed, will fall back to legacy method', e2);
