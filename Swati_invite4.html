@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>निमंत्रण वीडियो जनरेटर</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #130a0d; --bg-soft: #1c1114; --panel: #201317; --panel-raised: #271720;
+    --ink: #f4e9dc; --ink-soft: #c7b3a9;
+    --gold: #d9b45b; --gold-bright: #f3dd97; --gold-deep: #9c7a26;
+    --maroon: #a23a56;
+    --border: rgba(217,180,91,0.22); --border-soft: rgba(217,180,91,0.12);
+    --shadow: rgba(0,0,0,0.45); --danger: #e2685f; --success: #5fbf84;
+    color-scheme: dark;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; background:var(--bg); }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body{
+    margin:0; font-family:'Poppins', sans-serif; color:var(--ink);
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(217,180,91,0.10), transparent 55%),
+      radial-gradient(ellipse at 100% 0%, rgba(162,58,86,0.14), transparent 50%),
+      var(--bg);
+  }
+  .wrap{ max-width: 480px; margin: 0 auto; padding: 30px 18px 70px; }
+  .hero{ text-align:center; margin-bottom: 26px; }
+  .hero .kicker{ font-family:'Cormorant Garamond', serif; font-style:italic; color: var(--gold); font-size: 15px; margin-bottom: 4px; }
+  .hero h1{
+    font-family:'Cormorant Garamond', serif; font-weight:600; font-size: 28px; margin: 0 0 8px;
+    background: linear-gradient(100deg, var(--gold-deep), var(--gold-bright) 45%, var(--gold-deep) 70%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p{ color:var(--ink-soft); font-size: 13.5px; line-height:1.55; margin:0 auto; max-width: 360px; }
+
+  .card{ background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 18px; box-shadow: 0 10px 30px var(--shadow); }
+  .card h2{ font-family:'Cormorant Garamond', serif; font-weight:600; font-size: 19px; margin: 0 0 4px; color: var(--ink); display:flex; align-items:center; gap:10px; }
+  .card .sub{ font-size: 12.5px; color:var(--ink-soft); margin: 0 0 16px; line-height:1.55; }
+  .step-num{ display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background: linear-gradient(135deg, var(--gold-deep), var(--gold)); color:#1a0f08; font-size:12px; font-weight:700; flex-shrink:0; }
+
+  .upload-block{ margin-bottom: 16px; }
+  .upload-block:last-child{ margin-bottom:0; }
+  .upload-block .ulabel{ font-size: 12.5px; font-weight:600; color: var(--gold-bright); margin-bottom: 8px; display:flex; align-items:center; gap:6px; }
+  .dropzone{ border: 1.5px dashed var(--border); border-radius: 14px; padding: 20px 14px; text-align:center; cursor:pointer; background: var(--panel-raised); transition: border-color .15s ease; }
+  .dropzone:hover{ border-color: var(--gold); }
+  .dropzone input{ display:none; }
+  .dropzone .ic{ font-size: 24px; margin-bottom: 6px; }
+  .dropzone .txt{ font-size: 12.5px; color: var(--ink-soft); }
+  .dropzone .txt b{ color: var(--gold-bright); }
+  .video-ready{ display:flex; align-items:center; gap: 12px; background: var(--panel-raised); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+  .video-ready .ic{ font-size: 20px; }
+  .video-ready .meta{ flex:1; min-width:0; }
+  .video-ready .meta .name{ font-size: 12.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .video-ready .meta .dim{ font-size: 11px; color:var(--ink-soft); }
+  .link-btn{ background:none; border:none; color:var(--gold); font-size: 12px; text-decoration:underline; cursor:pointer; padding:4px; font-family:inherit; }
+
+  .tpl-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+  .tpl-card{ border-radius: 14px; border: 1.5px solid var(--border); background: var(--panel-raised); padding: 8px; cursor:pointer; transition: border-color .15s ease, transform .1s ease; text-align:center; }
+  .tpl-card:active{ transform: scale(0.98); }
+  .tpl-card.selected{ border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 8px 20px rgba(217,180,91,0.18); }
+  .tpl-card canvas{ width:100%; aspect-ratio: 9/16; border-radius: 9px; display:block; background:#000; margin-bottom: 8px; }
+  .tpl-card .tname{ font-size: 12.5px; font-weight:600; color: var(--ink); margin-bottom:2px; }
+  .tpl-card .tdesc{ font-size: 10.5px; color: var(--ink-soft); line-height:1.35; }
+  .tpl-card .ticon{ font-size: 13px; margin-right:3px; }
+  .tpl-note{ font-size: 11px; color: var(--ink-soft); text-align:center; margin-top:4px; }
+
+  .mode-toggle{ display:flex; background: var(--panel-raised); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+  .mode-toggle button{ flex:1; border:none; background:transparent; padding: 9px 6px; border-radius: 9px; font-family:inherit; font-size: 12.5px; color: var(--ink-soft); cursor:pointer; transition: all .15s ease; }
+  .mode-toggle button.active{ background: var(--panel); color: var(--gold-bright); font-weight:600; box-shadow: 0 2px 8px var(--shadow); }
+  label.field-label{ display:block; font-size:12px; color: var(--ink-soft); margin: 0 0 6px; }
+  select, input[type=text], textarea{ width:100%; border:1px solid var(--border); background: var(--bg-soft); color: var(--ink); border-radius: 10px; padding: 11px 12px; font-family:inherit; font-size: 14px; margin-bottom: 14px; }
+  select:focus, input:focus, textarea:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+  .row2{ display:flex; gap:10px; }
+  .row2 > div{ flex:1; }
+  textarea{ resize: vertical; min-height: 54px; }
+
+  .live-preview-wrap{ border-radius: 14px; overflow:hidden; border: 1px solid var(--border); background:#000; }
+  .live-preview-wrap canvas{ width:100%; aspect-ratio:9/16; display:block; max-height: 46vh; margin:0 auto; }
+  .live-preview-label{ font-size:11px; color:var(--ink-soft); text-align:center; margin-top:8px; }
+
+  button.primary{ width:100%; border:none; background: linear-gradient(135deg, var(--gold-deep), var(--gold) 50%, var(--gold-bright)); color:#241306; padding: 14px; border-radius: 12px; font-family:inherit; font-size: 14.5px; font-weight:700; letter-spacing:.01em; cursor:pointer; box-shadow: 0 8px 20px rgba(217,180,91,0.25); }
+  button.primary:disabled{ opacity:.4; cursor:not-allowed; box-shadow:none; }
+  button.primary:active:not(:disabled){ transform: translateY(1px); }
+
+  .progress-wrap{ margin-top: 14px; display:none; }
+  .progress-wrap.show{ display:block; }
+  .progress-label{ font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; text-align:center; }
+  .progress-bar{ height: 7px; background: var(--panel-raised); border-radius: 99px; overflow:hidden; }
+  .progress-fill{ height:100%; width:0%; background: linear-gradient(90deg, var(--gold-deep), var(--gold-bright)); transition: width .2s ease; }
+
+  canvas#workCanvas{ display:none; }
+  video#sourceVideo, video#bgVideoEl{ display:none; }
+
+  .preview-video-wrap{ display:none; border-radius: 16px; overflow:hidden; border: 1px solid var(--border); background:#000; margin-bottom: 14px; }
+  .preview-video-wrap.show{ display:block; }
+  .preview-video-wrap video{ width:100%; display:block; max-height: 70vh; }
+
+  .action-row{ display:flex; gap:10px; }
+  .action-row button{ flex:1; font-family:inherit; font-size: 13.5px; font-weight:600; padding: 12px; border-radius: 11px; cursor:pointer; border:1px solid var(--border); }
+  .btn-share{ background: linear-gradient(135deg,#2bab6b,#1f8f58); color:#fff; border:none; }
+  .btn-download{ background: var(--panel-raised); color: var(--gold-bright); }
+
+  .hint{ font-size: 11.5px; color: var(--ink-soft); text-align:center; margin-top: 10px; line-height:1.5; }
+  .toast{ position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(12px); background: var(--panel-raised); border:1px solid var(--border); color: var(--ink); padding: 11px 18px; border-radius: 10px; font-size: 13px; opacity:0; pointer-events:none; transition: all .25s ease; max-width: 90%; text-align:center; z-index: 50; }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+  .footer-note{ text-align:center; font-size: 11px; color: var(--ink-soft); opacity:.75; margin-top: 6px; }
+
+  .lock-screen{ position: fixed; inset: 0; background: var(--bg); display:flex; align-items:center; justify-content:center; padding: 20px; z-index: 100; padding-top: calc(20px + env(safe-area-inset-top, 0px)); padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .lock-card{ width: 100%; max-width: 320px; background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 30px 24px; text-align:center; box-shadow: 0 10px 30px var(--shadow); }
+  .lock-ic{ font-size: 34px; margin-bottom: 8px; }
+  .lock-card h2{ font-family:'Cormorant Garamond', serif; font-size: 20px; margin: 0 0 6px; color: var(--gold-bright); }
+  .lock-card p{ font-size: 12.5px; color: var(--ink-soft); margin: 0 0 18px; }
+  .pin-input{ width: 100%; text-align:center; letter-spacing: 10px; font-size: 22px; font-weight:600; border:1px solid var(--border); background: var(--bg-soft); color: var(--ink); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+  .pin-input:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+  .lock-card button.primary{ margin-top: 2px; }
+  .lock-error{ display:none; color: var(--danger); font-size: 12px; margin-top: 12px; }
+  .lock-error.show{ display:block; }
+  .lock-card.shake{ animation: shakeAnim .4s ease; }
+  @keyframes shakeAnim{ 0%,100%{ transform: translateX(0); } 20%{ transform: translateX(-8px); } 40%{ transform: translateX(8px); } 60%{ transform: translateX(-6px); } 80%{ transform: translateX(6px); } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+</head>
+<body>
+
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-card">
+    <div class="lock-ic">🔒</div>
+    <h2>Private Access</h2>
+    <p>जारी रखने के लिए 4-अंकों का PIN डालें</p>
+    <input type="password" id="pinInput" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="••••">
+    <button type="button" id="unlockBtn" class="primary">Unlock</button>
+    <div class="lock-error" id="lockError">गलत PIN, दोबारा कोशिश करें</div>
+  </div>
+</div>
+
+<div class="wrap" id="appContent" style="display:none;">
+
+  <div class="hero">
+    <div class="kicker">आपका अपना</div>
+    <h1>निमंत्रण वीडियो जनरेटर</h1>
+    <p>अपना इंट्रो बैकग्राउंड और मुख्य वीडियो डालें — नाम के साथ चमकता हुआ टेक्स्ट ऊपर लगेगा और एक पर्सनलाइज़्ड वीडियो बन जाएगा।</p>
+  </div>
+
+  <div class="card" id="uploadCard">
+    <h2><span class="step-num">1</span> वीडियो अपलोड करें</h2>
+    <p class="sub">दो वीडियो चाहिए — एक इंट्रो/बैकग्राउंड क्लिप (जिस पर नाम वाला टेक्स्ट ओवरले होगा), दूसरा आपका असली निमंत्रण वीडियो (जो बाद में जुड़ेगा)।</p>
+
+    <div class="upload-block">
+      <div class="ulabel">🅰️ इंट्रो / बैकग्राउंड वीडियो</div>
+      <div id="bgDropzone" class="dropzone">
+        <input type="file" id="bgVideoInput" accept="video/*">
+        <div class="ic">🎬</div>
+        <div class="txt"><b>टैप करें</b> बैकग्राउंड क्लिप चुनने के लिए</div>
+      </div>
+      <div id="bgVideoReady" class="video-ready" style="display:none;">
+        <div class="ic">✅</div>
+        <div class="meta"><div class="name" id="bgVideoName">—</div><div class="dim" id="bgVideoDim">—</div></div>
+        <button class="link-btn" id="changeBgVideoBtn">बदलें</button>
+      </div>
+    </div>
+
+    <div class="upload-block">
+      <div class="ulabel">🅱️ मुख्य निमंत्रण वीडियो</div>
+      <div id="dropzone" class="dropzone">
+        <input type="file" id="videoInput" accept="video/*">
+        <div class="ic">🎞️</div>
+        <div class="txt"><b>टैप करें</b> मुख्य वीडियो चुनने के लिए</div>
+      </div>
+      <div id="videoReady" class="video-ready" style="display:none;">
+        <div class="ic">✅</div>
+        <div class="meta"><div class="name" id="videoName">—</div><div class="dim" id="videoDim">—</div></div>
+        <button class="link-btn" id="changeVideoBtn">बदलें</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="templateCard">
+    <h2><span class="step-num">2</span> टेक्स्ट ओवरले स्टाइल चुनें</h2>
+    <p class="sub">यह सिर्फ टेक्स्ट + चमक/स्पार्कल इफेक्ट है जो आपके बैकग्राउंड वीडियो के ऊपर लगेगा।</p>
+    <div class="tpl-grid" id="tplGrid"></div>
+    <div class="tpl-note">ऊपर दिए प्रीव्यू सिर्फ स्टाइल दिखाने के लिए हैं — असली बैकग्राउंड वीडियो नीचे बड़े प्रीव्यू में दिखेगा।</div>
+  </div>
+
+  <div class="card" id="formCard">
+    <h2><span class="step-num">3</span> मेहमान का नाम</h2>
+    <p class="sub">यही नाम चुनी हुई स्टाइल में आपके बैकग्राउंड वीडियो के ऊपर एनिमेट होकर दिखेगा।</p>
+
+    <div class="mode-toggle">
+      <button type="button" class="active" data-mode="select" id="modeSelectBtn">चुनें + नाम लिखें</button>
+      <button type="button" data-mode="custom" id="modeCustomBtn">खुद लिखें (Custom)</button>
+    </div>
+    <div id="modeSelectPanel">
+      <div class="row2">
+        <div>
+          <label class="field-label">संबोधन</label>
+          <select id="salutationSelect">
+            <option value="Mr.">Mr.</option><option value="Mrs.">Mrs.</option><option value="Ms.">Ms.</option>
+            <option value="Dr.">Dr.</option><option value="Mr. &amp; Mrs.">Mr. &amp; Mrs.</option><option value="Miss">Miss</option>
+            <option value="Shri">श्री (Shri)</option><option value="Shrimati">श्रीमती (Shrimati)</option>
+            <option value="Kumari">कुमारी (Kumari)</option><option value="">(कोई नहीं)</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">नाम</label>
+          <input type="text" id="nameInput" placeholder="जैसे Amit Kumar">
+        </div>
+      </div>
+    </div>
+    <div id="modeCustomPanel" style="display:none;">
+      <label class="field-label">पूरा टेक्स्ट लिखें</label>
+      <textarea id="customText" placeholder="जैसे Mr. &amp; Mrs. Amit Kumar"></textarea>
+    </div>
+
+    <label class="field-label">ऊपर वाला छोटा टेक्स्ट (जो नाम से पहले दिखेगा)</label>
+    <input type="text" id="labelInput" placeholder="आप सभी को सादर आमंत्रित है" value="आप सभी को सादर आमंत्रित है">
+
+    <div class="live-preview-wrap">
+      <canvas id="bigPreviewCanvas"></canvas>
+    </div>
+    <div class="live-preview-label">लाइव प्रीव्यू — आपका बैकग्राउंड वीडियो + चुनी हुई स्टाइल</div>
+  </div>
+
+  <div class="card" id="generateCard">
+    <h2><span class="step-num">4</span> वीडियो बनाएं</h2>
+    <p class="sub">बटन दबाते ही टेक्स्ट वाला बैकग्राउंड इंट्रो, आपके मुख्य वीडियो के साथ मर्ज होकर एक वीडियो बन जाएगा।</p>
+    <button class="primary" id="generateBtn" disabled>वीडियो जनरेट करें</button>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label" id="progressLabel">तैयार हो रहा है…</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <h2><span class="step-num">5</span> प्रीव्यू और शेयर करें</h2>
+    <p class="sub">वीडियो देख लें, फिर सीधे WhatsApp पर या कहीं भी शेयर करें।</p>
+    <div class="preview-video-wrap" id="previewWrap"><video id="previewVideo" controls playsinline></video></div>
+    <div class="action-row">
+      <button class="btn-share" id="shareBtn">📤 शेयर करें</button>
+      <button class="btn-download" id="downloadBtn">⬇️ डाउनलोड</button>
+    </div>
+    <div class="hint" id="shareHint"></div>
+  </div>
+
+  <div class="footer-note">वीडियो सिर्फ आपके ब्राउज़र में प्रोसेस होता है — कहीं अपलोड नहीं होता।</div>
+</div>
+
+<video id="bgVideoEl" muted playsinline loop></video>
+<video id="sourceVideo" muted playsinline></video>
+<canvas id="workCanvas"></canvas>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+
+  // ================= PIN lock =================
+  var CORRECT_PIN = '0607';
+  (function initLock(){
+    var lockScreen = document.getElementById('lockScreen');
+    var appContent = document.getElementById('appContent');
+    var pinInput = document.getElementById('pinInput');
+    var unlockBtn = document.getElementById('unlockBtn');
+    var lockError = document.getElementById('lockError');
+    var lockCard = document.querySelector('.lock-card');
+    function tryUnlock(){
+      if(pinInput.value === CORRECT_PIN){
+        lockScreen.style.display = 'none';
+        appContent.style.display = 'block';
+        startPreviewLoop();
+      } else {
+        lockError.classList.add('show');
+        lockCard.classList.remove('shake'); void lockCard.offsetWidth; lockCard.classList.add('shake');
+        pinInput.value = ''; pinInput.focus();
+      }
+    }
+    unlockBtn.addEventListener('click', tryUnlock);
+    pinInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') tryUnlock(); });
+    setTimeout(function(){ pinInput.focus(); }, 300);
+  })();
+
+  // ================= helpers =================
+  const el = id => document.getElementById(id);
+  const toastEl = el('toast');
+  function toast(msg, ms){
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), ms || 3200);
+  }
+  function wrapCenteredText(ctx, text, cx, cy, maxWidth, lineHeight){
+    const words = String(text).split(/\s+/).filter(Boolean);
+    let lines = []; let cur = '';
+    for(const word of words){
+      const test = cur ? cur+' '+word : word;
+      if(ctx.measureText(test).width > maxWidth && cur){ lines.push(cur); cur = word; } else { cur = test; }
+    }
+    if(cur) lines.push(cur);
+    if(lines.length===0) lines = [''];
+    const totalH = (lines.length-1)*lineHeight;
+    lines.forEach((line,i)=>{ ctx.fillText(line, cx, cy - totalH/2 + i*lineHeight); });
+  }
+  function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+
+  const NAME_DELAY = 1.0;   // seconds before the name starts appearing
+  const NAME_REVEAL = 0.9;  // seconds to "write" the whole name
+
+  // Draws label text sitting on a soft rounded badge for guaranteed legibility
+  // over any busy background video. Call with ctx.textAlign='center' already set.
+  function drawLabelBadge(ctx, text, cx, baselineY, fontPx, textColor, bgColor, borderColor){
+    if(!text) return;
+    const tw = ctx.measureText(text).width;
+    const padX = fontPx*0.85, padTop = fontPx*0.62, padBottom = fontPx*0.42;
+    const bw = tw + padX*2;
+    const bh = fontPx*1.05 + padTop + padBottom;
+    const bx = cx - bw/2;
+    const by = baselineY - fontPx*1.05 - padTop;
+    const rx = bh/2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(bx+rx, by);
+    ctx.arcTo(bx+bw, by, bx+bw, by+bh, rx);
+    ctx.arcTo(bx+bw, by+bh, bx, by+bh, rx);
+    ctx.arcTo(bx, by+bh, bx, by, rx);
+    ctx.arcTo(bx, by, bx+bw, by, rx);
+    ctx.closePath();
+    ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+    ctx.fillStyle = bgColor;
+    ctx.fill();
+    if(borderColor){ ctx.strokeStyle = borderColor; ctx.lineWidth = Math.max(1, fontPx*0.045); ctx.stroke(); }
+    ctx.restore();
+    ctx.fillStyle = textColor;
+    ctx.fillText(text, cx, baselineY);
+  }
+
+  function wrapLines(ctx, text, maxWidth){
+    const words = String(text).split(/\s+/).filter(Boolean);
+    let lines = []; let cur = '';
+    for(const word of words){
+      const test = cur ? cur+' '+word : word;
+      if(ctx.measureText(test).width > maxWidth && cur){ lines.push(cur); cur = word; } else { cur = test; }
+    }
+    if(cur) lines.push(cur);
+    if(lines.length===0) lines = [''];
+    return lines;
+  }
+
+  // Draws `text` centered at (cx,cyCenter), revealing it letter-by-letter like
+  // it's being "written" with a little sparkle at the writing tip.
+  function drawRevealText(ctx, text, cx, cyCenter, maxWidth, lineHeight, revealProgress, sparkleColor, sparkleAlpha){
+    const lines = wrapLines(ctx, text, maxWidth);
+    const totalChars = lines.reduce((a,l)=>a+l.length,0) || 1;
+    let budget = Math.max(0, Math.round(totalChars*clamp01(revealProgress)));
+    const totalH = (lines.length-1)*lineHeight;
+    const savedAlign = ctx.textAlign;
+    ctx.textAlign = 'left';
+    let tipX=null, tipY=null;
+    for(let i=0;i<lines.length;i++){
+      const line = lines[i];
+      const lineY = cyCenter - totalH/2 + i*lineHeight;
+      const show = Math.min(line.length, budget);
+      budget -= show;
+      const shown = line.slice(0,show);
+      const fullW = ctx.measureText(line).width;
+      const startX = cx - fullW/2;
+      if(shown.length>0) ctx.fillText(shown, startX, lineY);
+      if(tipX===null && show < line.length){
+        const shownW = ctx.measureText(shown).width;
+        tipX = startX+shownW; tipY = lineY;
+      }
+    }
+    ctx.textAlign = savedAlign;
+    if(tipX!==null && revealProgress>0 && revealProgress<1){
+      drawSparkleStarSafe(ctx, tipX+maxWidth*0.012, tipY-lineHeight*0.18, maxWidth*0.028, sparkleAlpha||0.9, sparkleColor||'#ffe9a8');
+      drawSparkleStarSafe(ctx, tipX-maxWidth*0.01, tipY+lineHeight*0.12, maxWidth*0.016, (sparkleAlpha||0.9)*0.7, sparkleColor||'#ffe9a8');
+    }
+  }
+  // thin wrapper so this helper works even before drawSparkleStar is defined further below
+  function drawSparkleStarSafe(ctx,x,y,size,alpha,color){
+    if(typeof drawSparkleStar === 'function') drawSparkleStar(ctx,x,y,size,alpha,color);
+  }
+  function drawVideoCover(ctx, video, w, h){
+    const vw = video.videoWidth, vh = video.videoHeight;
+    if(!vw || !vh){ return; }
+    const videoRatio = vw/vh, canvasRatio = w/h;
+    let sx,sy,sw,sh;
+    if(videoRatio > canvasRatio){ sh = vh; sw = vh*canvasRatio; sx = (vw-sw)/2; sy=0; }
+    else { sw = vw; sh = vw/canvasRatio; sx=0; sy=(vh-sh)/2; }
+    ctx.drawImage(video, sx,sy,sw,sh, 0,0,w,h);
+  }
+  function dimVignette(ctx,w,h,alpha){
+    const g = ctx.createRadialGradient(w/2,h*0.5,h*0.12,w/2,h*0.5,h*0.68);
+    g.addColorStop(0, `rgba(8,5,6,${0.08*alpha})`);
+    g.addColorStop(1, `rgba(8,5,6,${0.55*alpha})`);
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  }
+
+  // ================= sparkle primitive =================
+  function makeSparkles(count, w, h, opts){
+    opts = opts || {};
+    const arr = [];
+    for(let i=0;i<count;i++){
+      arr.push({
+        x: Math.random()*w, y: Math.random()*h,
+        size: w*(opts.minSize||0.006) + Math.random()*w*(opts.sizeRange||0.012),
+        phase: Math.random()*Math.PI*2, speed: 1.2 + Math.random()*2.2,
+        drift: (opts.drift===false) ? 0 : (h*0.01 + Math.random()*h*0.02)
+      });
+    }
+    return arr;
+  }
+  function drawSparkleStar(ctx,x,y,size,alpha,color){
+    if(alpha<=0.01) return;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x,y); ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0,-size);
+    ctx.quadraticCurveTo(size*0.18,-size*0.18,size,0);
+    ctx.quadraticCurveTo(size*0.18,size*0.18,0,size);
+    ctx.quadraticCurveTo(-size*0.18,size*0.18,-size,0);
+    ctx.quadraticCurveTo(-size*0.18,-size*0.18,0,-size);
+    ctx.fill();
+    ctx.save(); ctx.rotate(Math.PI/2); ctx.globalAlpha = alpha*0.7; ctx.scale(0.5,0.5);
+    ctx.beginPath();
+    ctx.moveTo(0,-size); ctx.quadraticCurveTo(size*0.18,-size*0.18,size,0);
+    ctx.quadraticCurveTo(size*0.18,size*0.18,0,size); ctx.quadraticCurveTo(-size*0.18,size*0.18,-size,0);
+    ctx.quadraticCurveTo(-size*0.18,-size*0.18,0,-size); ctx.fill(); ctx.restore();
+    ctx.restore();
+  }
+  function updateDrawSparkles(ctx, sparkles, t, w, h, color, globalAlpha){
+    for(const s of sparkles){
+      const tw = (Math.sin(t*s.speed + s.phase)+1)/2;
+      const alpha = (0.1 + tw*0.9) * globalAlpha;
+      const sc = 0.45 + tw*0.75;
+      drawSparkleStar(ctx, s.x, s.y, s.size*sc, alpha, color);
+      if(s.drift){ s.y += s.drift * 0.016; if(s.y > h+20){ s.y = -20; s.x = Math.random()*w; } }
+    }
+  }
+  function goldTextGradient(ctx, cx, textWidth, t, speed){
+    const sweep = ((Math.sin(t*(speed||1.1))+1)/2);
+    const left = cx - textWidth/2 - textWidth*0.3;
+    const right = cx + textWidth/2 + textWidth*0.3;
+    const g = ctx.createLinearGradient(left, 0, right, 0);
+    const pos = sweep;
+    g.addColorStop(Math.max(0,pos-0.35), '#9c7a26');
+    g.addColorStop(Math.max(0,pos-0.12), '#d9b45b');
+    g.addColorStop(Math.min(1,pos), '#fff3cf');
+    g.addColorStop(Math.min(1,pos+0.12), '#d9b45b');
+    g.addColorStop(Math.min(1,pos+0.35), '#9c7a26');
+    return g;
+  }
+  function baseFadeEnvelope(t, duration, fadeInT, fadeOutT){
+    const fi = fadeInT || 0.5, fo = fadeOutT || 0.55;
+    const fadeIn = clamp01(t/fi);
+    const fadeOut = t > duration-fo ? clamp01((duration-t)/fo) : 1;
+    return Math.min(fadeIn, fadeOut);
+  }
+
+  // ================= TEMPLATE: golden (overlay) =================
+  function initGolden(w,h){ return { sparkles: makeSparkles(30, w, h, {drift:false}) }; }
+  function drawGolden(ctx,w,h,t,duration,text,state,hasBg,label){
+    const alpha = baseFadeEnvelope(t, duration);
+    if(!hasBg){
+      ctx.fillStyle = '#0d0607'; ctx.fillRect(0,0,w,h);
+      const g = ctx.createRadialGradient(w/2,h*0.48,h*0.05,w/2,h*0.48,h*0.55);
+      g.addColorStop(0, `rgba(60,28,20,${0.9*alpha})`); g.addColorStop(1, `rgba(13,6,7,${0.9*alpha})`);
+      ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+    } else {
+      dimVignette(ctx,w,h,alpha);
+    }
+    updateDrawSparkles(ctx, state.sparkles, t, w, h, '#ffe9a8', alpha);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.translate(w/2, h*0.5);
+    const labelFontPx = Math.round(w*0.048);
+    ctx.font = `600 ${labelFontPx}px 'Cormorant Garamond', serif`;
+    ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+    drawLabelBadge(ctx, label, 0, -h*0.08, labelFontPx, '#fff3cf', 'rgba(20,10,8,0.5)', 'rgba(217,180,91,0.55)');
+    const nameReveal = clamp01((t-NAME_DELAY)/NAME_REVEAL);
+    const nameAlpha = t<NAME_DELAY ? 0 : clamp01((t-NAME_DELAY)/0.3);
+    ctx.save(); ctx.globalAlpha = alpha*nameAlpha;
+    ctx.font = `${Math.round(w*0.1)}px 'Great Vibes', cursive`;
+    const tw = ctx.measureText(text).width;
+    ctx.shadowColor = 'rgba(255,224,150,0.7)'; ctx.shadowBlur = w*0.028;
+    ctx.fillStyle = goldTextGradient(ctx, 0, tw, t, 1.1);
+    drawRevealText(ctx, text, 0, h*0.02, w*0.8, w*0.105, nameReveal, '#ffe9a8', 0.95);
+    ctx.restore();
+    ctx.shadowBlur = 0; ctx.restore();
+  }
+
+  // ================= TEMPLATE: royal (overlay) =================
+  function initRoyal(w,h){ return { sparkles: makeSparkles(14, w, h, {drift:true, minSize:0.004, sizeRange:0.006}) }; }
+  function drawRoyal(ctx,w,h,t,duration,text,state,hasBg,label){
+    const alpha = baseFadeEnvelope(t, duration);
+    if(!hasBg){
+      const g = ctx.createLinearGradient(0,0,0,h);
+      g.addColorStop(0, '#120a0d'); g.addColorStop(0.5,'#1d1013'); g.addColorStop(1,'#120a0d');
+      ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+    } else {
+      dimVignette(ctx,w,h,alpha*0.8);
+    }
+    ctx.save(); ctx.globalAlpha = alpha*0.85;
+    ctx.strokeStyle = 'rgba(217,180,91,0.6)'; ctx.lineWidth = Math.max(1,w*0.003);
+    ctx.strokeRect(w*0.05,h*0.045,w*0.9,h*0.91);
+    ctx.strokeStyle = 'rgba(217,180,91,0.3)'; ctx.lineWidth = Math.max(1,w*0.0015);
+    ctx.strokeRect(w*0.065,h*0.058,w*0.87,h*0.884);
+    ctx.restore();
+    updateDrawSparkles(ctx, state.sparkles, t, w, h, '#f0d58a', alpha*0.85);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.translate(w/2, h*0.5);
+    const labelFontPx2 = Math.round(w*0.046);
+    ctx.font = `600 ${labelFontPx2}px 'Cormorant Garamond', serif`;
+    ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+    drawLabelBadge(ctx, label, 0, -h*0.09, labelFontPx2, '#fff3cf', 'rgba(18,10,13,0.5)', 'rgba(217,180,91,0.6)');
+    const nameReveal = clamp01((t-NAME_DELAY)/NAME_REVEAL);
+    const nameAlpha = t<NAME_DELAY ? 0 : clamp01((t-NAME_DELAY)/0.3);
+    ctx.font = `${Math.round(w*0.088)}px 'Great Vibes', cursive`;
+    const tw = ctx.measureText(text).width;
+    ctx.save(); ctx.globalAlpha = alpha*nameAlpha;
+    ctx.shadowColor = 'rgba(255,224,150,0.6)'; ctx.shadowBlur = w*0.02;
+    ctx.fillStyle = goldTextGradient(ctx, 0, tw, t, 0.55);
+    drawRevealText(ctx, text, 0, h*0.02, w*0.74, w*0.095, nameReveal, '#f0d58a', 0.95);
+    ctx.shadowBlur = 0;
+    const lw = Math.min(tw*0.6, w*0.4);
+    ctx.globalAlpha = alpha*nameAlpha*0.75; ctx.strokeStyle = 'rgba(217,180,91,0.7)'; ctx.lineWidth = Math.max(1,w*0.0018);
+    ctx.beginPath(); ctx.moveTo(-lw/2, h*0.1); ctx.lineTo(lw/2, h*0.1); ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+  }
+
+  // ================= TEMPLATE: magic (overlay) =================
+  function initMagic(w,h){ return { trail: [], ambient: makeSparkles(18, w, h, {drift:false}) }; }
+  function magicWandPoint(progress, w, h){
+    const x = w*0.18 + (w*0.32)*progress + Math.sin(progress*Math.PI)*w*0.08;
+    const y = h*0.72 - (h*0.22)*progress - Math.sin(progress*Math.PI*1.4)*h*0.05;
+    return {x,y};
+  }
+  function drawMagic(ctx,w,h,t,duration,text,state,hasBg,label){
+    const wandEnd = 1.3, burstEnd = 1.65;
+    const alpha = baseFadeEnvelope(t, duration, 0.3, 0.55);
+    if(!hasBg){
+      ctx.fillStyle = '#0a0a12'; ctx.fillRect(0,0,w,h);
+      const g = ctx.createRadialGradient(w/2,h*0.45,h*0.04,w/2,h*0.45,h*0.6);
+      g.addColorStop(0, `rgba(38,24,54,${0.9*alpha})`); g.addColorStop(1, `rgba(10,10,18,${0.9*alpha})`);
+      ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+    } else {
+      dimVignette(ctx,w,h,alpha*0.85);
+    }
+    updateDrawSparkles(ctx, state.ambient, t, w, h, '#d9c4ff', alpha*0.55);
+
+    if(t < wandEnd){
+      const progress = clamp01(t/wandEnd);
+      const p = magicWandPoint(progress, w, h);
+      state.trail.push({x:p.x, y:p.y, born:t});
+      if(state.trail.length>40) state.trail.shift();
+      for(const pt of state.trail){
+        const age = t - pt.born;
+        const a = clamp01(1 - age/0.5) * alpha;
+        if(a>0.02) drawSparkleStar(ctx, pt.x, pt.y, w*0.012*(1-age), a, '#ffe9a8');
+      }
+      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(p.x,p.y); ctx.rotate(progress*Math.PI*1.2);
+      ctx.font = `${Math.round(w*0.07)}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('✨', 0, 0); ctx.restore();
+    } else if(t < burstEnd){
+      const bp = clamp01((t-wandEnd)/(burstEnd-wandEnd));
+      const cx = w/2, cy = h*0.5;
+      ctx.save(); ctx.globalAlpha = (1-bp)*alpha*0.8;
+      const fg = ctx.createRadialGradient(cx,cy,0,cx,cy,w*0.5*bp+10);
+      fg.addColorStop(0, 'rgba(255,245,220,0.9)'); fg.addColorStop(1, 'rgba(255,245,220,0)');
+      ctx.fillStyle = fg; ctx.fillRect(0,0,w,h); ctx.restore();
+      const n = 16;
+      for(let i=0;i<n;i++){
+        const ang = (i/n)*Math.PI*2; const r = bp*w*0.3;
+        const x = cx+Math.cos(ang)*r, y = cy+Math.sin(ang)*r*1.3;
+        drawSparkleStar(ctx, x, y, w*0.012*(1-bp*0.5), (1-bp)*alpha, '#ffe9a8');
+      }
+    } else {
+      ctx.save(); ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.translate(w/2, h*0.5);
+      const labelP = clamp01((t-burstEnd)/0.35);
+      ctx.save(); ctx.globalAlpha = alpha*labelP;
+      const labelFontPx3 = Math.round(w*0.048);
+      ctx.font = `600 ${labelFontPx3}px 'Cormorant Garamond', serif`;
+      ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+      drawLabelBadge(ctx, label, 0, -h*0.08, labelFontPx3, '#fff3cf', 'rgba(20,14,28,0.5)', 'rgba(217,180,91,0.55)');
+      ctx.restore();
+      const nameReveal = clamp01((t-burstEnd-0.2)/NAME_REVEAL);
+      const nameAlpha = t<(burstEnd+0.2) ? 0 : clamp01((t-burstEnd-0.2)/0.3);
+      ctx.save(); ctx.globalAlpha = alpha*nameAlpha;
+      ctx.font = `${Math.round(w*0.1)}px 'Great Vibes', cursive`;
+      const tw = ctx.measureText(text).width;
+      ctx.shadowColor = 'rgba(255,224,150,0.75)'; ctx.shadowBlur = w*0.032;
+      ctx.fillStyle = goldTextGradient(ctx, 0, tw, t, 1.1);
+      drawRevealText(ctx, text, 0, h*0.02, w*0.8, w*0.105, nameReveal, '#ffe9a8', 1);
+      ctx.restore();
+      ctx.restore();
+      updateDrawSparkles(ctx, state.ambient, t*1.6, w, h, '#ffe9a8', alpha*0.9);
+    }
+  }
+
+  // ================= TEMPLATE: floral (overlay) =================
+  let floralFrameImg = new Image();
+  let floralFrameReady = false;
+  (function loadFloralFrame(){
+    const W=1080,H=1920;
+    const gold="#d9b45b", goldSoft="#e6cf9b", pink="#d98fae", pinkSoft="#f2cfdd", leaf="#7e8c5c";
+    function cluster(cx,cy,scale,flip){
+      const fx = flip?-1:1;
+      return `<g transform="translate(${cx} ${cy}) scale(${scale*fx},${scale})">
+        <path d="M0,0 C40,-60 120,-70 150,-20 C170,10 150,50 110,55 C150,70 160,120 120,140 C90,155 50,130 40,95 C20,140 -30,150 -60,110 C-85,78 -65,35 -20,25 C-55,0 -55,-45 -15,-60 C15,-72 45,-45 40,-10 Z" fill="${leaf}" opacity="0.45"/>
+        <circle cx="0" cy="0" r="34" fill="${pinkSoft}" opacity="0.92"/>
+        <circle cx="0" cy="0" r="34" fill="none" stroke="${pink}" stroke-width="3"/>
+        <circle cx="30" cy="-18" r="24" fill="${pink}" opacity="0.92"/>
+        <circle cx="36" cy="14" r="22" fill="${pinkSoft}" opacity="0.92"/>
+        <circle cx="0" cy="0" r="12" fill="${gold}"/>
+      </g>`;
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
+      <rect x="34" y="34" width="${W-68}" height="${H-68}" fill="none" stroke="${gold}" stroke-width="3"/>
+      <rect x="46" y="46" width="${W-92}" height="${H-92}" fill="none" stroke="${goldSoft}" stroke-width="1.5"/>
+      ${cluster(90,120,0.85,false)} ${cluster(W-90,120,0.85,true)}
+      ${cluster(90,H-150,0.85,false)} ${cluster(W-90,H-150,0.85,true)}
+    </svg>`;
+    const blob = new Blob([svg], {type:'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    floralFrameImg.onload = ()=>{ floralFrameReady = true; URL.revokeObjectURL(url); };
+    floralFrameImg.src = url;
+  })();
+  function initFloral(w,h){
+    const petals = [];
+    for(let i=0;i<22;i++){
+      petals.push({ x:Math.random()*w, y:Math.random()*h - Math.random()*h,
+        size: w*0.012+Math.random()*w*0.012, speed: h*0.08+Math.random()*h*0.1,
+        sway: Math.random()*Math.PI*2, swaySpeed: 0.6+Math.random()*0.8,
+        rot: Math.random()*Math.PI*2, rotSpeed:(Math.random()-0.5)*1.2,
+        c: Math.random()>0.5?'#d98fae':'#f2cfdd' });
+    }
+    return {petals};
+  }
+  function drawFloral(ctx,w,h,t,duration,text,state,hasBg,label){
+    const alpha = baseFadeEnvelope(t, duration);
+    if(!hasBg){
+      // demo/placeholder look for the small style-picker preview only
+      const g = ctx.createLinearGradient(0,0,0,h);
+      g.addColorStop(0,'#1c1013'); g.addColorStop(0.55,'#241319'); g.addColorStop(1,'#1a0f12');
+      ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+      ctx.save(); ctx.globalAlpha = alpha;
+      if(floralFrameReady) ctx.drawImage(floralFrameImg,0,0,w,h);
+      ctx.restore();
+      for(const p of state.petals){
+        p.y += p.speed*0.016; p.sway += p.swaySpeed*0.016; p.rot += p.rotSpeed*0.016;
+        if(p.y>h+30){ p.y=-30; p.x = Math.random()*w; }
+        const x = p.x + Math.sin(p.sway)*w*0.03;
+        ctx.save(); ctx.globalAlpha = alpha*0.9; ctx.translate(x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.c; ctx.beginPath(); ctx.ellipse(0,0,p.size*0.55,p.size,0,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    // when hasBg is true, your own background video already has the floral
+    // frame + petals baked in, so we only overlay the text here.
+    ctx.save(); ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.translate(w/2, h*0.5);
+    const labelColor = hasBg ? '#7d2742' : '#f2d7e0';
+    const nameColor  = hasBg ? '#7d2742' : '#f9dfe9';
+    const labelGlow  = hasBg ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.5)';
+    const nameGlow   = hasBg ? 'rgba(255,255,255,0.7)' : 'rgba(242,207,221,0.5)';
+    const labelFontPx4 = Math.round(w*0.048);
+    ctx.font = `600 ${labelFontPx4}px 'Cormorant Garamond', serif`;
+    ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+    const badgeBg = hasBg ? 'rgba(255,248,240,0.75)' : 'rgba(20,10,13,0.5)';
+    const badgeBorder = hasBg ? 'rgba(217,180,91,0.55)' : 'rgba(242,207,221,0.4)';
+    drawLabelBadge(ctx, label, 0, -h*0.065, labelFontPx4, labelColor, badgeBg, badgeBorder);
+    const nameReveal = clamp01((t-NAME_DELAY)/NAME_REVEAL);
+    const nameAlpha = t<NAME_DELAY ? 0 : clamp01((t-NAME_DELAY)/0.3);
+    ctx.save(); ctx.globalAlpha = alpha*nameAlpha;
+    ctx.font = `${Math.round(w*0.095)}px 'Great Vibes', cursive`;
+    ctx.fillStyle = nameColor;
+    ctx.shadowColor = nameGlow; ctx.shadowBlur = w*0.02;
+    drawRevealText(ctx, text, 0, h*0.03, w*0.78, w*0.1, nameReveal, hasBg?'#d9b45b':'#ffe9a8', 0.95);
+    ctx.restore();
+    ctx.shadowBlur = 0; ctx.restore();
+  }
+
+  // ================= registry =================
+  const TEMPLATES = {
+    golden: { name:'Golden Sparkle', icon:'✨', desc:'चमकता गोल्डन टेक्स्ट, टिमटिमाते सितारे', duration:3.6, init:initGolden, draw:drawGolden },
+    royal:  { name:'Royal Shine',   icon:'👑', desc:'गोल्ड फ्रेम के साथ रॉयल लुक',        duration:3.6, init:initRoyal,  draw:drawRoyal  },
+    magic:  { name:'Magic Reveal',  icon:'🪄', desc:'जादू की छड़ी से चमकता रिवील',        duration:4.2, init:initMagic,  draw:drawMagic  },
+    floral: { name:'Elegant Floral',icon:'🌸', desc:'फूल, पंखुड़ियों वाला रोमांटिक स्टाइल', duration:3.6, init:initFloral, draw:drawFloral }
+  };
+  const TEMPLATE_ORDER = ['golden','royal','magic','floral'];
+  let selectedTemplate = 'golden';
+  function drawTemplateFrame(ctx,w,h,t,duration,text,templateId,state,hasBg,label){
+    TEMPLATES[templateId].draw(ctx,w,h,t,duration,text,state, !!hasBg, label);
+  }
+
+  // ================= text mode =================
+  const salutationSelect = el('salutationSelect');
+  const nameInput = el('nameInput');
+  const customText = el('customText');
+  const modeSelectBtn = el('modeSelectBtn');
+  const modeCustomBtn = el('modeCustomBtn');
+  const modeSelectPanel = el('modeSelectPanel');
+  const modeCustomPanel = el('modeCustomPanel');
+  let mode = 'select';
+  function currentText(){
+    if(mode==='custom'){ return customText.value.trim() || 'Mr. & Mrs. Amit Kumar'; }
+    const sal = salutationSelect.value;
+    const name = nameInput.value.trim() || 'Amit Kumar';
+    return sal ? (sal+' '+name) : name;
+  }
+  const labelInput = el('labelInput');
+  function currentLabel(){
+    return labelInput.value.trim() || 'आप सभी को सादर आमंत्रित है';
+  }
+  modeSelectBtn.addEventListener('click', ()=>{
+    mode='select'; modeSelectBtn.classList.add('active'); modeCustomBtn.classList.remove('active');
+    modeSelectPanel.style.display='block'; modeCustomPanel.style.display='none';
+  });
+  modeCustomBtn.addEventListener('click', ()=>{
+    mode='custom'; modeCustomBtn.classList.add('active'); modeSelectBtn.classList.remove('active');
+    modeSelectPanel.style.display='none'; modeCustomPanel.style.display='block';
+  });
+
+  // ================= template picker (small stylized previews, no bg) =================
+  const tplGrid = el('tplGrid');
+  const previewCanvases = {}; const previewStates = {};
+  TEMPLATE_ORDER.forEach(id=>{
+    const tpl = TEMPLATES[id];
+    const card = document.createElement('div');
+    card.className = 'tpl-card' + (id===selectedTemplate ? ' selected' : '');
+    const canvas = document.createElement('canvas'); canvas.width = 180; canvas.height = 320;
+    card.appendChild(canvas);
+    const nameDiv = document.createElement('div'); nameDiv.className = 'tname';
+    nameDiv.innerHTML = `<span class="ticon">${tpl.icon}</span>${tpl.name}`;
+    card.appendChild(nameDiv);
+    const descDiv = document.createElement('div'); descDiv.className = 'tdesc'; descDiv.textContent = tpl.desc;
+    card.appendChild(descDiv);
+    card.addEventListener('click', ()=>{
+      selectedTemplate = id;
+      document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+    tplGrid.appendChild(card);
+    previewCanvases[id] = canvas;
+    previewStates[id] = tpl.init(canvas.width, canvas.height);
+  });
+
+  // ================= big preview (uses real bg video once uploaded) =================
+  const bigPreviewCanvas = el('bigPreviewCanvas');
+  bigPreviewCanvas.width = 360; bigPreviewCanvas.height = 640;
+  let bigPreviewState = TEMPLATES[selectedTemplate].init(bigPreviewCanvas.width, bigPreviewCanvas.height);
+  let bigPreviewTemplateTracked = selectedTemplate;
+  const bgVideoEl = el('bgVideoEl');
+  let bgVideoReadyForPreview = false;
+
+  let previewStarted = false; let previewStartTime = null;
+  function startPreviewLoop(){
+    if(previewStarted) return;
+    previewStarted = true; previewStartTime = performance.now();
+    requestAnimationFrame(previewTick);
+  }
+  function previewTick(now){
+    const elapsed = (now - previewStartTime)/1000;
+    TEMPLATE_ORDER.forEach(id=>{
+      const tpl = TEMPLATES[id]; const canvas = previewCanvases[id]; const ctx = canvas.getContext('2d');
+      const t = elapsed % tpl.duration;
+      drawTemplateFrame(ctx, canvas.width, canvas.height, t, tpl.duration, currentText(), id, previewStates[id], false, currentLabel());
+    });
+    if(bigPreviewTemplateTracked !== selectedTemplate){
+      bigPreviewTemplateTracked = selectedTemplate;
+      bigPreviewState = TEMPLATES[selectedTemplate].init(bigPreviewCanvas.width, bigPreviewCanvas.height);
+    }
+    const tplBig = TEMPLATES[selectedTemplate];
+    const tBig = elapsed % tplBig.duration;
+    const bctx = bigPreviewCanvas.getContext('2d');
+    const hasRealBg = bgVideoReadyForPreview && !bgVideoEl.paused && bgVideoEl.readyState >= 2;
+    if(hasRealBg){
+      bctx.fillStyle = '#000'; bctx.fillRect(0,0,bigPreviewCanvas.width,bigPreviewCanvas.height);
+      drawVideoCover(bctx, bgVideoEl, bigPreviewCanvas.width, bigPreviewCanvas.height);
+    }
+    drawTemplateFrame(bctx, bigPreviewCanvas.width, bigPreviewCanvas.height, tBig, tplBig.duration, currentText(), selectedTemplate, bigPreviewState, hasRealBg, currentLabel());
+    requestAnimationFrame(previewTick);
+  }
+
+  // ================= IndexedDB persistence =================
+  function openDb(){
+    return new Promise((resolve,reject)=>{
+      const req = indexedDB.open('weddingInviteAppDB', 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore('media'); };
+      req.onsuccess = ()=>resolve(req.result); req.onerror = ()=>reject(req.error);
+    });
+  }
+  async function saveMediaDb(key, blob){
+    try{
+      const database = await openDb();
+      await new Promise((resolve,reject)=>{
+        const tx = database.transaction('media','readwrite');
+        tx.objectStore('media').put(blob,key);
+        tx.oncomplete = resolve; tx.onerror = ()=>reject(tx.error);
+      });
+    }catch(e){ console.warn('save failed', e); }
+  }
+  async function loadMediaDb(key){
+    try{
+      const database = await openDb();
+      return await new Promise((resolve,reject)=>{
+        const tx = database.transaction('media','readonly');
+        const req = tx.objectStore('media').get(key);
+        req.onsuccess = ()=>resolve(req.result||null); req.onerror = ()=>reject(req.error);
+      });
+    }catch(e){ return null; }
+  }
+  async function clearMediaDb(key){
+    try{
+      const database = await openDb();
+      await new Promise((resolve,reject)=>{
+        const tx = database.transaction('media','readwrite');
+        tx.objectStore('media').delete(key);
+        tx.oncomplete = resolve; tx.onerror = ()=>reject(tx.error);
+      });
+    }catch(e){}
+  }
+
+  // ================= main video upload =================
+  const dropzone = el('dropzone');
+  const videoInput = el('videoInput');
+  const videoReady = el('videoReady');
+  const videoNameEl = el('videoName');
+  const videoDimEl = el('videoDim');
+  const changeVideoBtn = el('changeVideoBtn');
+  const generateBtn = el('generateBtn');
+  const sourceVideo = el('sourceVideo');
+  const workCanvas = el('workCanvas');
+  const resultCard = el('resultCard');
+  let videoBlob = null, videoURL = null, videoMeta = null;
+
+  function humanSize(bytes){ if(bytes>1024*1024) return (bytes/1024/1024).toFixed(1)+' MB'; return Math.round(bytes/1024)+' KB'; }
+
+  function checkReadyToGenerate(){ generateBtn.disabled = !(videoMeta && bgVideoMeta); }
+
+  function setupVideo(blob, filename){
+    videoBlob = blob;
+    if(videoURL) URL.revokeObjectURL(videoURL);
+    videoURL = URL.createObjectURL(blob);
+    sourceVideo.src = videoURL;
+    sourceVideo.onloadedmetadata = ()=>{
+      videoMeta = { width: sourceVideo.videoWidth||1080, height: sourceVideo.videoHeight||1920, duration: sourceVideo.duration||0 };
+      videoNameEl.textContent = filename || 'आपका वीडियो';
+      videoDimEl.textContent = `${videoMeta.width}×${videoMeta.height} · ${humanSize(blob.size)}`;
+      dropzone.style.display = 'none'; videoReady.style.display = 'flex';
+      checkReadyToGenerate();
+    };
+  }
+  videoInput.addEventListener('change', async (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    if(!f.type.startsWith('video/')){ toast('कृपया एक वीडियो फ़ाइल चुनें।'); return; }
+    setupVideo(f, f.name); saveMediaDb('mainVideo', f);
+  });
+  dropzone.addEventListener('click', ()=> videoInput.click());
+  changeVideoBtn.addEventListener('click', async ()=>{
+    await clearMediaDb('mainVideo');
+    videoBlob = null; videoMeta = null;
+    dropzone.style.display = 'block'; videoReady.style.display = 'none';
+    resultCard.style.display = 'none'; checkReadyToGenerate();
+  });
+
+  // ================= bg video upload =================
+  const bgDropzone = el('bgDropzone');
+  const bgVideoInput = el('bgVideoInput');
+  const bgVideoReady = el('bgVideoReady');
+  const bgVideoNameEl = el('bgVideoName');
+  const bgVideoDimEl = el('bgVideoDim');
+  const changeBgVideoBtn = el('changeBgVideoBtn');
+  let bgVideoBlob = null, bgVideoURL = null, bgVideoMeta = null;
+
+  function setupBgVideo(blob, filename){
+    bgVideoBlob = blob;
+    if(bgVideoURL) URL.revokeObjectURL(bgVideoURL);
+    bgVideoURL = URL.createObjectURL(blob);
+    bgVideoEl.src = bgVideoURL;
+    bgVideoReadyForPreview = false;
+    bgVideoEl.onloadedmetadata = ()=>{
+      bgVideoMeta = { width: bgVideoEl.videoWidth||1080, height: bgVideoEl.videoHeight||1920, duration: bgVideoEl.duration||3 };
+      bgVideoNameEl.textContent = filename || 'बैकग्राउंड वीडियो';
+      bgVideoDimEl.textContent = `${bgVideoMeta.width}×${bgVideoMeta.height} · ${humanSize(blob.size)}`;
+      bgDropzone.style.display = 'none'; bgVideoReady.style.display = 'flex';
+      bgVideoEl.loop = true; bgVideoEl.muted = true;
+      bgVideoEl.play().then(()=>{ bgVideoReadyForPreview = true; }).catch(()=>{});
+      checkReadyToGenerate();
+    };
+  }
+  bgVideoInput.addEventListener('change', async (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    if(!f.type.startsWith('video/')){ toast('कृपया एक वीडियो फ़ाइल चुनें।'); return; }
+    setupBgVideo(f, f.name); saveMediaDb('bgVideo', f);
+  });
+  bgDropzone.addEventListener('click', ()=> bgVideoInput.click());
+  changeBgVideoBtn.addEventListener('click', async ()=>{
+    await clearMediaDb('bgVideo');
+    bgVideoBlob = null; bgVideoMeta = null; bgVideoReadyForPreview = false;
+    bgDropzone.style.display = 'block'; bgVideoReady.style.display = 'none';
+    resultCard.style.display = 'none'; checkReadyToGenerate();
+  });
+
+  (async function initFromStored(){
+    const storedMain = await loadMediaDb('mainVideo');
+    if(storedMain) setupVideo(storedMain, 'आपका सेव किया हुआ मुख्य वीडियो');
+    const storedBg = await loadMediaDb('bgVideo');
+    if(storedBg) setupBgVideo(storedBg, 'आपका सेव किया हुआ बैकग्राउंड वीडियो');
+  })();
+
+  // ================= generation =================
+  const progressWrap = el('progressWrap');
+  const progressFill = el('progressFill');
+  const progressLabel = el('progressLabel');
+  const previewWrap = el('previewWrap');
+  const previewVideo = el('previewVideo');
+  let resultBlob = null;
+  let audioCtx=null, srcNode=null, bgSrcNode=null, destNode=null;
+
+  function pickMimeType(){
+    const candidates = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    for(const c of candidates){ if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) return c; }
+    return '';
+  }
+  function setProgress(pct,label){ progressWrap.classList.add('show'); progressFill.style.width = pct+'%'; if(label) progressLabel.textContent = label; }
+
+  async function generateVideo(){
+    if(!videoMeta || !videoBlob){ toast('पहले मुख्य वीडियो अपलोड करें।'); return; }
+    if(!bgVideoMeta || !bgVideoBlob){ toast('पहले बैकग्राउंड वीडियो अपलोड करें।'); return; }
+    generateBtn.disabled = true;
+    resultCard.style.display = 'none';
+    setProgress(2,'तैयारी हो रही है…');
+    try{ await (document.fonts && document.fonts.ready); }catch(e){}
+
+    const w = videoMeta.width, h = videoMeta.height;
+    workCanvas.width = w; workCanvas.height = h;
+    const ctx = workCanvas.getContext('2d');
+    const tpl = TEMPLATES[selectedTemplate];
+    const genState = tpl.init(w,h);
+    const text = currentText();
+    const label = currentLabel();
+    const introDuration = bgVideoMeta.duration || tpl.duration;
+
+    // Fast path: record only the short intro clip, then merge it with the
+    // ORIGINAL main video file as-is (no re-encoding the whole thing) via ffmpeg.
+    let finalBlob = null;
+    if(typeof FFmpeg !== 'undefined'){
+      try{
+        const introBlob = await recordIntroOnly(ctx, w, h, tpl, genState, text, label, introDuration);
+        setProgress(55, 'मुख्य वीडियो के साथ जोड़ा जा रहा है…');
+        finalBlob = await fastMergeWithMain(introBlob, videoBlob, w, h);
+      }catch(e){ console.warn('fast merge path failed, falling back', e); finalBlob = null; }
+    }
+
+    // Fallback: slower, always-reliable method (also what runs on this Claude
+    // preview link, since ffmpeg can't reach the network here — works fully
+    // once hosted elsewhere, e.g. GitHub Pages).
+    if(!finalBlob){
+      finalBlob = await legacyFullRecord(ctx, w, h, tpl, genState, text, label, introDuration);
+    }
+
+    resultBlob = finalBlob;
+    const url = URL.createObjectURL(resultBlob);
+    previewVideo.src = url;
+    previewWrap.classList.add('show');
+    resultCard.style.display = 'block';
+    setProgress(100,'तैयार है!');
+    setTimeout(()=>{ progressWrap.classList.remove('show'); progressFill.style.width='0%'; }, 1200);
+    generateBtn.disabled = false;
+    resultCard.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  generateBtn.addEventListener('click', generateVideo);
+
+  // records ONLY the intro (background video + text overlay), short clip
+  async function recordIntroOnly(ctx, w, h, tpl, genState, text, label, introDuration){
+    try{
+      if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); destNode = audioCtx.createMediaStreamDestination(); }
+      if(!bgSrcNode){ bgSrcNode = audioCtx.createMediaElementSource(bgVideoEl); bgSrcNode.connect(destNode); }
+      if(audioCtx.state === 'suspended') await audioCtx.resume();
+    }catch(e){ console.warn('bg audio graph failed', e); }
+
+    bgVideoEl.loop = false; bgVideoEl.pause(); bgVideoEl.currentTime = 0;
+
+    const canvasStream = workCanvas.captureStream(30);
+    const tracks = [...canvasStream.getVideoTracks()];
+    if(destNode) tracks.push(...destNode.stream.getAudioTracks());
+    const combined = new MediaStream(tracks);
+
+    const mimeType = pickMimeType();
+    const pixels = w*h;
+    const videoBitsPerSecond = Math.min(16000000, Math.max(6000000, Math.round(pixels*0.12)));
+    let recorder;
+    try{ recorder = new MediaRecorder(combined, {mimeType: mimeType||undefined, videoBitsPerSecond, audioBitsPerSecond:192000}); }
+    catch(e1){ recorder = mimeType ? new MediaRecorder(combined,{mimeType}) : new MediaRecorder(combined); }
+
+    const chunks = [];
+    recorder.ondataavailable = e => { if(e.data && e.data.size>0) chunks.push(e.data); };
+    const stopped = new Promise(resolve => { recorder.onstop = resolve; });
+    recorder.start(250);
+
+    const bgPlayPromise = bgVideoEl.play();
+    if(bgPlayPromise && bgPlayPromise.catch) bgPlayPromise.catch(()=>{});
+    const introStartTime = performance.now();
+
+    await new Promise(resolve=>{
+      function step(now){
+        const t = (now - introStartTime)/1000;
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+        if(bgVideoEl.readyState >= 2) drawVideoCover(ctx, bgVideoEl, w, h);
+        drawTemplateFrame(ctx, w, h, t, introDuration, text, selectedTemplate, genState, true, label);
+        setProgress(5 + Math.min(45,(t/introDuration)*45), 'इंट्रो तैयार हो रहा है…');
+        if(t < introDuration && !bgVideoEl.ended) requestAnimationFrame(step); else resolve();
+      }
+      requestAnimationFrame(step);
+    });
+    bgVideoEl.pause();
+
+    await new Promise(r=>setTimeout(r,200));
+    recorder.stop();
+    await stopped;
+
+    bgVideoEl.loop = true; bgVideoEl.currentTime = 0;
+    bgVideoEl.play().catch(()=>{});
+
+    const outType = mimeType ? mimeType.split(';')[0] : 'video/webm';
+    return new Blob(chunks, {type: outType});
+  }
+
+  // merges the recorded intro clip with the ORIGINAL main video file, trying
+  // a fast no-re-encode concat first and falling back to a re-encode concat
+  function cleanupFfmpegFiles(names){
+    for(const n of names){ try{ ffmpegInstance.FS('unlink', n); }catch(e){} }
+  }
+  async function fastMergeWithMain(introBlob, mainBlob, w, h){
+    if(typeof FFmpeg === 'undefined') return null;
+    if(mainBlob.size > 300*1024*1024) return null;
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    if(!ffmpegInstance){
+      ffmpegInstance = createFFmpeg({ log:false, corePath:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js' });
+    }
+    ffmpegInstance.setProgress(({ratio})=>{ if(ratio>=0 && ratio<=1) setProgress(55 + ratio*35, 'जोड़ा जा रहा है…'); });
+    try{ if(!ffmpegInstance.isLoaded()) await ffmpegInstance.load(); }catch(e){ return null; }
+
+    let mainExt = 'mp4';
+    if(mainBlob.type.includes('quicktime')) mainExt = 'mov';
+    else if(mainBlob.type.includes('webm')) mainExt = 'webm';
+    else if(mainBlob.type.includes('matroska')) mainExt = 'mkv';
+    const introFile = 'intro_in.webm', introMp4 = 'intro.mp4', mainFile = 'main_in.'+mainExt;
+
+    try{
+      ffmpegInstance.FS('writeFile', introFile, await fetchFile(introBlob));
+      await ffmpegInstance.run('-i', introFile, '-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p',
+        '-vf', `scale=${w}:${h}`, '-r','30', '-c:a','aac','-ar','44100','-ac','2','-b:a','192k', introMp4);
+      ffmpegInstance.FS('writeFile', mainFile, await fetchFile(mainBlob));
+
+      // attempt 1: fast stream-copy concat (no re-encoding of the main video)
+      try{
+        ffmpegInstance.FS('writeFile','list.txt', new TextEncoder().encode(`file '${introMp4}'\nfile '${mainFile}'\n`));
+        await ffmpegInstance.run('-f','concat','-safe','0','-i','list.txt','-c','copy','-movflags','+faststart','merged.mp4');
+        const data = ffmpegInstance.FS('readFile','merged.mp4');
+        if(data && data.length > 10000){
+          const blob = new Blob([data.buffer], {type:'video/mp4'});
+          cleanupFfmpegFiles([introFile, introMp4, mainFile, 'list.txt', 'merged.mp4']);
+          return blob;
+        }
+        throw new Error('empty output');
+      }catch(e1){
+        console.warn('fast concat failed, retrying with re-encode concat', e1);
+      }
+
+      // attempt 2: re-encode concat (still only runs through ffmpeg once, no realtime canvas capture of the main video)
+      await ffmpegInstance.run('-i', introMp4, '-i', mainFile,
+        '-filter_complex', `[0:v:0]scale=${w}:${h},setsar=1[v0];[1:v:0]scale=${w}:${h},setsar=1[v1];[v0][0:a:0][v1][1:a:0]concat=n=2:v=1:a=1[outv][outa]`,
+        '-map','[outv]','-map','[outa]','-c:v','libx264','-preset','ultrafast','-crf','24','-c:a','aac','-movflags','+faststart','merged2.mp4');
+      const data2 = ffmpegInstance.FS('readFile','merged2.mp4');
+      const blob2 = new Blob([data2.buffer], {type:'video/mp4'});
+      cleanupFfmpegFiles([introFile, introMp4, mainFile, 'list.txt', 'merged2.mp4']);
+      return blob2;
+    }catch(e2){
+      console.warn('merge with main video failed entirely', e2);
+      return null;
+    }
+  }
+
+  // old, always-reliable method: records bg-intro + main video together in
+  // real time. Used as a fallback, and is what runs on this Claude preview
+  // link since ffmpeg can't reach the network here.
+  async function legacyFullRecord(ctx, w, h, tpl, genState, text, label, introDuration){
+    try{
+      if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); destNode = audioCtx.createMediaStreamDestination(); }
+      if(!srcNode){ srcNode = audioCtx.createMediaElementSource(sourceVideo); srcNode.connect(destNode); }
+      if(!bgSrcNode){ bgSrcNode = audioCtx.createMediaElementSource(bgVideoEl); bgSrcNode.connect(destNode); }
+      if(audioCtx.state === 'suspended') await audioCtx.resume();
+    }catch(e){ console.warn('audio graph failed', e); }
+
+    bgVideoEl.loop = false; bgVideoEl.pause(); bgVideoEl.currentTime = 0;
+    sourceVideo.currentTime = 0;
+
+    const canvasStream = workCanvas.captureStream(30);
+    const tracks = [...canvasStream.getVideoTracks()];
+    if(destNode) tracks.push(...destNode.stream.getAudioTracks());
+    const combined = new MediaStream(tracks);
+
+    const mimeType = pickMimeType();
+    const pixels = w*h;
+    const videoBitsPerSecond = Math.min(16000000, Math.max(6000000, Math.round(pixels*0.12)));
+    let recorder;
+    try{ recorder = new MediaRecorder(combined, {mimeType: mimeType||undefined, videoBitsPerSecond, audioBitsPerSecond:192000}); }
+    catch(e1){
+      try{ recorder = mimeType ? new MediaRecorder(combined,{mimeType}) : new MediaRecorder(combined); }
+      catch(e2){
+        toast('माफ़ कीजिए, इस ब्राउज़र में वीडियो बनाना सपोर्ट नहीं है। Chrome (Android/Desktop) आज़माएँ।');
+        throw e2;
+      }
+    }
+    const chunks = [];
+    recorder.ondataavailable = e => { if(e.data && e.data.size>0) chunks.push(e.data); };
+    const stopped = new Promise(resolve => { recorder.onstop = resolve; });
+    recorder.start(250);
+
+    const bgPlayPromise = bgVideoEl.play();
+    if(bgPlayPromise && bgPlayPromise.catch) bgPlayPromise.catch(()=>{});
+    const introStartTime = performance.now();
+    await new Promise(resolve=>{
+      function step(now){
+        const t = (now - introStartTime)/1000;
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+        if(bgVideoEl.readyState >= 2) drawVideoCover(ctx, bgVideoEl, w, h);
+        drawTemplateFrame(ctx, w, h, t, introDuration, text, selectedTemplate, genState, true, label);
+        setProgress(5 + Math.min(40,(t/introDuration)*40), 'इंट्रो तैयार हो रहा है…');
+        if(t < introDuration && !bgVideoEl.ended) requestAnimationFrame(step); else resolve();
+      }
+      requestAnimationFrame(step);
+    });
+    bgVideoEl.pause();
+
+    try{ sourceVideo.muted = false; }catch(e){}
+    const playPromise = sourceVideo.play();
+    if(playPromise && playPromise.catch) playPromise.catch(()=>{});
+    await new Promise(resolve=>{
+      let finished=false;
+      const finish=()=>{ if(finished) return; finished=true; resolve(); };
+      sourceVideo.onended = finish;
+      function step(){
+        if(finished) return;
+        if(sourceVideo.ended){ finish(); return; }
+        drawVideoCover(ctx, sourceVideo, w, h);
+        const pct = videoMeta.duration ? (sourceVideo.currentTime/videoMeta.duration) : 0;
+        setProgress(45+Math.min(40,pct*40), 'आपका वीडियो जोड़ा जा रहा है…');
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+
+    await new Promise(r=>setTimeout(r,250));
+    recorder.stop();
+    await stopped;
+
+    bgVideoEl.loop = true; bgVideoEl.currentTime = 0;
+    bgVideoEl.play().catch(()=>{});
+
+    const outType = mimeType ? mimeType.split(';')[0] : 'video/webm';
+    let rawBlob = new Blob(chunks, {type: outType});
+
+    if(outType.includes('webm') && typeof FFmpeg !== 'undefined'){
+      setProgress(90, 'MP4 में बदला जा रहा है…');
+      const mp4Blob = await tryConvertToMp4(rawBlob);
+      if(mp4Blob) rawBlob = mp4Blob;
+    }
+    return rawBlob;
+  }
+
+  // ================= MP4 conversion (ffmpeg.wasm) — used by the fallback path =================
+  let ffmpegInstance = null;
+  async function tryConvertToMp4(webmBlob){
+    try{
+      if(typeof FFmpeg === 'undefined') return null;
+      if(webmBlob.size > 150*1024*1024) return null;
+      const { createFFmpeg, fetchFile } = FFmpeg;
+      if(!ffmpegInstance){
+        ffmpegInstance = createFFmpeg({
+          log:false,
+          corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+        });
+      }
+      ffmpegInstance.setProgress(({ratio})=>{
+        if(ratio>=0 && ratio<=1) setProgress(90 + ratio*9, 'MP4 में बदला जा रहा है…');
+      });
+      if(!ffmpegInstance.isLoaded()) await ffmpegInstance.load();
+      ffmpegInstance.FS('writeFile', 'input.webm', await fetchFile(webmBlob));
+      await ffmpegInstance.run('-i','input.webm','-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-movflags','+faststart','output.mp4');
+      const data = ffmpegInstance.FS('readFile','output.mp4');
+      try{ ffmpegInstance.FS('unlink','input.webm'); ffmpegInstance.FS('unlink','output.mp4'); }catch(e){}
+      return new Blob([data.buffer], {type:'video/mp4'});
+    }catch(e){
+      console.warn('mp4 conversion failed', e);
+      return null;
+    }
+  }
+
+  // ================= share / download =================
+  const shareBtn = el('shareBtn');
+  const downloadBtn = el('downloadBtn');
+  const shareHint = el('shareHint');
+  function buildFilename(){
+    const t = currentText().replace(/[^a-zA-Z0-9\u0900-\u097F]+/g,'_').slice(0,40) || 'invitation';
+    return 'Invitation_'+t;
+  }
+  async function doDownload(){
+    if(!resultBlob) return false;
+    const ext = resultBlob.type.includes('mp4') ? 'mp4' : 'webm';
+    const filename = buildFilename()+'.'+ext;
+    try{
+      const downloads = window.claude ? await window.claude.use('downloads') : null;
+      if(downloads){ await downloads.save({filename, data: resultBlob}); toast('वीडियो सेव हो गया।'); return true; }
+    }catch(e){
+      if(e && e.code === 'declined'){ return false; }
+      console.warn('download capability failed', e);
+    }
+    try{
+      const url = URL.createObjectURL(resultBlob);
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      toast('वीडियो डाउनलोड हो रहा है।'); return true;
+    }catch(e2){ console.warn('plain download failed', e2); }
+    toast('डाउनलोड यहाँ उपलब्ध नहीं है।'); return false;
+  }
+  shareBtn.addEventListener('click', async ()=>{
+    if(!resultBlob) return;
+    const ext = resultBlob.type.includes('mp4') ? 'mp4' : 'webm';
+    const filename = buildFilename()+'.'+ext;
+    const file = new File([resultBlob], filename, {type: resultBlob.type});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Wedding Invitation'}); return;
+      }
+    }catch(e){ if(e && e.name==='AbortError') return; }
+    shareHint.textContent = 'इस डिवाइस पर डायरेक्ट शेयर उपलब्ध नहीं है — वीडियो डाउनलोड हो रहा है, उसके बाद WhatsApp खोलकर मैन्युअली अटैच करके भेज दें।';
+    await doDownload();
+  });
+  downloadBtn.addEventListener('click', ()=> doDownload());
+
+})();
+</script>
+</body>
+</html>
