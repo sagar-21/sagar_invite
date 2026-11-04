@@ -942,24 +942,25 @@
     const label = currentLabel();
     const introDuration = bgVideoMeta.duration || tpl.duration;
 
-    // Fast path: record only the short intro clip, then merge it with the
-    // ORIGINAL main video file as-is (no re-encoding the whole thing) via ffmpeg.
+    // Try the FAST method first: record only the short intro, then merge it
+    // with your original main video file directly (no re-encoding it at all).
     let finalBlob = null;
+    let usedFast = false;
     if(typeof FFmpeg !== 'undefined'){
       try{
         const introBlob = await recordIntroOnly(ctx, w, h, tpl, genState, text, label, introDuration);
-        setProgress(55, 'मुख्य वीडियो के साथ जोड़ा जा रहा है…');
+        setProgress(55, 'मुख्य वीडियो के साथ जोड़ा जा रहा है (fast method)…');
         finalBlob = await fastMergeWithMain(introBlob, videoBlob, w, h);
-      }catch(e){ console.warn('fast merge path failed, falling back', e); finalBlob = null; }
+        if(finalBlob) usedFast = true;
+      }catch(e){ console.warn('fast merge failed:', e); finalBlob = null; }
     }
 
-    // Fallback: slower, always-reliable method (also what runs on this Claude
-    // preview link, since ffmpeg can't reach the network here — works fully
-    // once hosted elsewhere, e.g. GitHub Pages).
-    if(!finalBlob){
+    if(finalBlob){
+      toast('✅ Fast method से बन गया — आपका मुख्य वीडियो बिना दोबारा process हुए सीधे जुड़ा है।');
+    } else {
+      toast('Fast method यहाँ काम नहीं आया (वीडियो के कोडेक की वजह से) — रिलायबल तरीक़ा इस्तेमाल हो रहा है, थोड़ा समय लगेगा…');
       finalBlob = await legacyFullRecord(ctx, w, h, tpl, genState, text, label, introDuration);
     }
-
     resultBlob = finalBlob;
     const url = URL.createObjectURL(resultBlob);
     previewVideo.src = url;
@@ -1054,31 +1055,22 @@
         '-vf', `scale=${w}:${h}`, '-r','30', '-c:a','aac','-ar','44100','-ac','2','-b:a','192k', introMp4);
       ffmpegInstance.FS('writeFile', mainFile, await fetchFile(mainBlob));
 
-      // attempt 1: fast stream-copy concat (no re-encoding of the main video)
-      try{
-        ffmpegInstance.FS('writeFile','list.txt', new TextEncoder().encode(`file '${introMp4}'\nfile '${mainFile}'\n`));
-        await ffmpegInstance.run('-f','concat','-safe','0','-i','list.txt','-c','copy','-movflags','+faststart','merged.mp4');
-        const data = ffmpegInstance.FS('readFile','merged.mp4');
-        if(data && data.length > 10000){
-          const blob = new Blob([data.buffer], {type:'video/mp4'});
-          cleanupFfmpegFiles([introFile, introMp4, mainFile, 'list.txt', 'merged.mp4']);
-          return blob;
-        }
-        throw new Error('empty output');
-      }catch(e1){
-        console.warn('fast concat failed, retrying with re-encode concat', e1);
+      // fast stream-copy concat: no re-encoding of the main video at all.
+      // If this doesn't succeed (codec mismatch etc.) we deliberately do NOT
+      // fall back to a full re-encode here — that would be far slower than
+      // just using the legacy method, so we return null and let the caller
+      // fall back to legacyFullRecord instead.
+      ffmpegInstance.FS('writeFile','list.txt', new TextEncoder().encode(`file '${introMp4}'\nfile '${mainFile}'\n`));
+      await ffmpegInstance.run('-f','concat','-safe','0','-i','list.txt','-c','copy','-movflags','+faststart','merged.mp4');
+      const data = ffmpegInstance.FS('readFile','merged.mp4');
+      cleanupFfmpegFiles([introFile, introMp4, mainFile, 'list.txt', 'merged.mp4']);
+      if(data && data.length > 10000){
+        return new Blob([data.buffer], {type:'video/mp4'});
       }
-
-      // attempt 2: re-encode concat (still only runs through ffmpeg once, no realtime canvas capture of the main video)
-      await ffmpegInstance.run('-i', introMp4, '-i', mainFile,
-        '-filter_complex', `[0:v:0]scale=${w}:${h},setsar=1[v0];[1:v:0]scale=${w}:${h},setsar=1[v1];[v0][0:a:0][v1][1:a:0]concat=n=2:v=1:a=1[outv][outa]`,
-        '-map','[outv]','-map','[outa]','-c:v','libx264','-preset','ultrafast','-crf','24','-c:a','aac','-movflags','+faststart','merged2.mp4');
-      const data2 = ffmpegInstance.FS('readFile','merged2.mp4');
-      const blob2 = new Blob([data2.buffer], {type:'video/mp4'});
-      cleanupFfmpegFiles([introFile, introMp4, mainFile, 'list.txt', 'merged2.mp4']);
-      return blob2;
+      return null;
     }catch(e2){
-      console.warn('merge with main video failed entirely', e2);
+      console.warn('fast merge failed, will fall back to legacy method', e2);
+      try{ cleanupFfmpegFiles([introFile, introMp4, mainFile, 'list.txt', 'merged.mp4']); }catch(e3){}
       return null;
     }
   }
@@ -1164,9 +1156,12 @@
     let rawBlob = new Blob(chunks, {type: outType});
 
     if(outType.includes('webm') && typeof FFmpeg !== 'undefined'){
-      setProgress(90, 'MP4 में बदला जा रहा है…');
+      setProgress(90, 'MP4 में बदला जा रहा है… (थोड़ा समय लगेगा, वीडियो जितना लंबा उतना ज़्यादा)');
       const mp4Blob = await tryConvertToMp4(rawBlob);
-      if(mp4Blob) rawBlob = mp4Blob;
+      if(mp4Blob){ rawBlob = mp4Blob; }
+      else { toast('MP4 conversion नहीं हो पाया, webm वीडियो दिया जा रहा है।'); }
+    } else if(outType.includes('webm')){
+      toast('MP4 conversion यहाँ उपलब्ध नहीं है (सिर्फ़ GitHub जैसी होस्टिंग पर काम करता है) — webm वीडियो दिया जा रहा है।');
     }
     return rawBlob;
   }
